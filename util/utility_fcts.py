@@ -2,10 +2,52 @@
 
 from netCDF4 import Dataset
 import numpy as np
+import matplotlib as mpl
 from matplotlib import pyplot as plt, patches
 from matplotlib.collections import LineCollection
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import sys
+
+
+def add_phase_locking_text(ax, sig_level):
+    if sig_level >= 90:
+        locking_str = "Phase locking"
+        x = 0.85
+        y = 1.00
+    else:
+        locking_str = "No phase locking"
+        x = 0.9
+        y = 1.0
+    ax.text(x, y, locking_str, color='black', horizontalalignment='center',
+            verticalalignment='center', transform=ax.transAxes, fontsize=13)
+
+
+def compute_flux(time, flux, threshold=2.25e12, clen=1500):
+    clen_ind = int(clen / 100)
+    cum_flux = np.zeros(clen_ind)
+    cum_flux_max = np.zeros(clen_ind)
+    counter = 0
+    for i in range(0, len(time), clen_ind):
+        if (i > clen_ind) and (i + clen_ind < len(time)) and counter == 0:
+            flux_wind = flux[i:i + len(cum_flux)]
+            # Con1=(FluxWind>Threshold)*1.0
+            max_val = flux_wind.max()
+            if max_val > threshold:
+                counter = 1
+                con2 = (flux_wind == max_val) * 1.0
+            else:
+                con2 = np.zeros(clen_ind)
+            cum_flux = cum_flux + (flux_wind > threshold) * 1.0
+            cum_flux_max = cum_flux_max + con2
+        else:
+            counter = 0
+    return cum_flux, cum_flux_max
+
+
+def compute_hist(time, flux, threshold=2.25e12, clen=1500):
+    _, fmax = compute_flux(time, flux, threshold=threshold, clen=clen)
+    event = np.asarray(flux2hetiming(fmax))
+    return event
 
 
 def create_do_forcing_plot(fig, ax, counter):
@@ -86,10 +128,38 @@ def draw_snow(x, y, ax, snowfall, color='silver'):
                 transform=ax.transAxes, fontsize=15, fontweight='bold')
 
 
+def extract_surges(ice_vol, time=100, thresh=-5e11):
+    vol_grad = np.gradient(ice_vol, time)
+    surge_inds = [i for i, n in enumerate(vol_grad) if n < thresh]
+    surge_list = [[]]  # array of sub-arrays
+    for i, num in enumerate(surge_inds):
+        surge_list[-1].append(num)
+        if i != len(surge_inds) - 1 and (surge_inds[i + 1] -
+                                         surge_inds[i]) > 1:
+            surge_list.append([])
+    filtered_surge_list = [x for x in surge_list if len(x) >= 4]
+    return filtered_surge_list
+
+
+def flux2hetiming(flux_vec, spacing=100):
+    he_timing = []
+    for i in range(len(flux_vec)):
+        for j in range(int(flux_vec[i])):
+            he_timing.append(i * spacing)
+    return he_timing
+
+
 def get_first_zeros_incols(var):
     indrow = (var == 0).argmax(axis=0)
     indcol = np.arange(0, len(var[0, :]), 1)
     return indrow, indcol
+
+
+def get_he_events(run, region, threshold=2.25e12, clen=1500):
+    fname = f'Data/{region}Hov_{run}.nc'
+    time, flux = read_data(fname, 'flux_crossSection')
+    event = compute_hist(time, flux, clen=clen, threshold=threshold)
+    return event
 
 
 def mask_by_value(var2mask, value=0):
@@ -107,6 +177,32 @@ def moving_average(vec, window_size=10):
     return np.convolve(vec, window, mode='same')
 
 
+def plot_do_cycle_polar(ax):
+    n = 200
+    theta_c1 = np.linspace(0, 2 * np.pi / 1500 * 200, n)
+    theta_c2 = np.linspace(2 * np.pi / 1500 * 1300, 2 * np.pi / 1500 * 1500, n)
+    theta_w1 = np.linspace(2 * np.pi / 1500 * 200, 2 * np.pi / 1500 * 750, n)
+    theta_w2 = np.linspace(2 * np.pi / 1500 * 750, 2 * np.pi / 1500 * 1300, n)
+    t = np.linspace(0, 2 * np.pi, n)
+    r = np.linspace(2.10e15, 5.9e15, 2)
+    rg, tg = np.meshgrid(r, theta_c1)
+    c = tg
+    norm = mpl.colors.Normalize(0 - 1, theta_c1[-1])
+    im = ax.pcolormesh(theta_c1, r, c.T, norm=norm, cmap='Reds_r')
+    rg, tg = np.meshgrid(r, theta_w1)
+    c = tg
+    norm = mpl.colors.Normalize(theta_w1[0], theta_w1[-1] + 1)
+    im = ax.pcolormesh(theta_w1, r, c.T, norm=norm, cmap='Blues')
+    rg, tg = np.meshgrid(r, theta_w2)
+    c = tg
+    norm = mpl.colors.Normalize(theta_w2[0] - 1, theta_w2[-1])
+    im = ax.pcolormesh(theta_w2, r, c.T, norm=norm, cmap='Blues_r')
+    rg, tg = np.meshgrid(r, theta_c2)
+    c = tg
+    norm = mpl.colors.Normalize(theta_c2[0], theta_c2[-1] + 1)
+    im = ax.pcolormesh(theta_c2, r, c.T, norm=norm, cmap='Reds')
+
+
 def proc_flowline_vars(zs, zb, temp_bottom, thk_grad, usurf_grad, vel_base,
                        thk):
     indrow, indcol = get_first_zeros_incols(zs)
@@ -118,6 +214,18 @@ def proc_flowline_vars(zs, zb, temp_bottom, thk_grad, usurf_grad, vel_base,
     usurf_grad = mask_by_var(usurf_grad, thk)
     vel_base = mask_by_var(vel_base, -2e9)
     return zs, zb, temp_bottom, thk_grad, usurf_grad, vel_base
+
+
+def read_data(fname, var='thk'):
+    ncfile = Dataset(fname)
+    time = ncfile.variables['time'][:] / (86400 * 365)
+    time = time - time[0]
+    if var == 'thk':
+        vol = ncfile.variables[var][:, 0, 0]
+        return time, vol
+    else:
+        flux = ncfile.variables['flux_crossSection'][:]
+        return time, flux
 
 
 def read_flowline_vars(filepath):
