@@ -6,6 +6,8 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt, patches
 from matplotlib.collections import LineCollection
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from astropy import stats as statsAs
+from matplotlib.patches import Rectangle
 import sys
 
 
@@ -162,6 +164,11 @@ def get_he_events(run, region, threshold=2.25e12, clen=1500):
     return event
 
 
+def kuipers_test(event, base_sample):
+    k_test = abs(round(statsAs.kuiper_two(base_sample, event)[1], 3))
+    return (1 - k_test) * 100
+
+
 def mask_by_value(var2mask, value=0):
     var2mask[var2mask == value] = np.nan
     return var2mask
@@ -201,6 +208,48 @@ def plot_do_cycle_polar(ax):
     c = tg
     norm = mpl.colors.Normalize(theta_c2[0], theta_c2[-1] + 1)
     im = ax.pcolormesh(theta_c2, r, c.T, norm=norm, cmap='Reds')
+
+
+def plot_he_lines(ax, theta, vol, surge_events):
+    ax.plot(theta, vol, color="black", lw=0.3)
+    for i in range(len(surge_events)):
+        if i == 0:
+            ax.plot(theta[surge_events[i]], vol[surge_events[i]],
+                    color='black', lw=2, label='Ice volume')
+        else:
+            ax.plot(theta[surge_events[i]], vol[surge_events[i]],
+                    color='black', lw=2)
+
+
+def plot_panel_titles(ax, i_smb, i_temp):
+    if i_temp == 0:
+        smb_str = "$\Delta$SMB = " + str(round(i_smb/1000,3)) + " m/yr"
+        ax.text(-0.2, 0.5, smb_str, color="black",
+                horizontalalignment='center', verticalalignment='center',
+                transform=ax.transAxes, rotation=90, fontsize=17,
+                fontweight='bold')
+    elif i_temp == 1:
+        ax.set_title("$\Delta$Temp = " + str(i_smb) + "°C", fontsize=17,
+                     fontweight='bold')
+
+
+def plot_siglevel(sig_level, ax):
+    alpha = 0.2
+    rect = [0.1, 0.1, 0.8, 0.8]
+    axx = ax.inset_axes([.0, .0, 1, 1],)
+    autoAxis = axx.axis('off')
+    if sig_level >= 99.0:
+        rec = Rectangle((-0.1, -0.05), 1.2, 1.1, fill=True, facecolor='lime',
+                        alpha=alpha)
+        rec = axx.add_patch(rec)
+        rec.set_clip_on(False)
+    elif sig_level >= 90.0 and sig_level < 99.0:
+        rec = Rectangle((-0.1, -0.05), 1.2, 1.1, fill=True, facecolor='grey',
+                        alpha=alpha)
+        rec = axx.add_patch(rec)
+        rec.set_clip_on(False)
+    axx.set_zorder(0)
+    ax.set_zorder(axx.get_zorder() + 1)
 
 
 def proc_flowline_vars(zs, zb, temp_bottom, thk_grad, usurf_grad, vel_base,
@@ -249,6 +298,21 @@ def read_flowline_vars(filepath):
                                     usurf_grad, vel_base, thk)
     return (thk, thk_grad, usurf, usurf_grad, bed, zb, temp_bottom, vel_base,
             tillw, bmelt, dbdt, time, taud, taub, distance)
+
+
+def set_axis_properties(region, ax, xticks, labels):
+    if region == "Kenzie":
+        ax.set_ylim(3.85e15, 4.95e15)
+    else:
+        ax.set_ylim(4e15, 5.9e15)
+    ax.set_theta_zero_location('N')
+    ax.set_theta_direction(-1)
+    ax.set_yticklabels([])
+    ax.yaxis.grid(False)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(labels, fontsize=13)
+    ax.xaxis.grid(True)
+    ax.tick_params(pad=5)
 
 
 def set_ind_to_zero(var, indrow, indcol):

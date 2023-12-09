@@ -210,27 +210,26 @@ def main():
     # global base_path, region, t_pert, smb_pert
     parser = argparse.ArgumentParser()
     parser.add_argument("-reg", "--region", choices=["Hudson", "Kenzie"],
-                        help="Specify which plot you want to create")
+                        help="Specify which plot you want to create",
+                        required=True)
     args = parser.parse_args()
-    # base_path = "/work/ba0989/m300792/HE_Runs/ExperimentsComposite/"
     if args.region == "Kenzie":
-        BaseRunSample = get_he_events("HE02", args.region, threshold=1.0e12)
-        GradThresh = -2e11
-        FluxThresh = 1.5e12
+        base_sample = get_he_events("HE02", args.region, threshold=1.0e12)
+        grad_thresh = -2e11
+        flux_thresh = 1.5e12
     else:
-        BaseRunSample = get_he_events("HE02", args.region)
-        GradThresh = -3e11
-        FluxThresh = 2.25e12
+        base_sample = get_he_events("HE02", args.region)
+        grad_thresh = -3e11
+        flux_thresh = 2.25e12
     t_pert = [14, 10, 6, 2]
     smb_pert = [150, 100, 75, 50, 37.5, 9.375]
     runs = [["HE68", "HE69", "HE70", "HE71", "HE72", "HE73"],
             ["HE46", "HE61", "HE55", "HE64", "HE49", "HE52"],
             ["HE47", "HE62", "HE56", "HE65", "HE50", "HE53"],
-            ["HE48", "HE63", "HE57", "HE66", "HE51" ,"HE54"]]
+            ["HE48", "HE63", "HE57", "HE66", "HE51", "HE54"]]
     ticks = np.array([0, 300, 600, 900, 1200])
     xticks = 2 * np.pi / 1500.0 * ticks
     labels = ['0', '300', '600', '900', '1200']
-    counter = 0
     m, n = 3, 2
     fig, ax = plt.subplots(m, n, subplot_kw={'projection': 'polar'},
                            gridspec_kw={'wspace': 0.15, 'hspace': 0.175,
@@ -304,40 +303,39 @@ def main():
     count_row = 1
     count_col = 0
 
-    for iSMB in range(len(Runs[0])):
-        for iTemp in range(len(Runs)):
-            if iTemp == 0 and iSMB == 0 or iTemp == 3 and iSMB == 0 or \
-               iTemp == 0 and iSMB == 5 or iTemp == 3 and iSMB == 5:
+    for i_smb in range(len(runs[0])):
+        for i_temp in range(len(runs)):
+            if i_temp == 0 and i_smb == 0 or i_temp == 3 and i_smb == 0 or \
+                    i_temp == 0 and i_smb == 5 or i_temp == 3 and i_smb == 5:
 
-                File=BasePath + Runs[iTemp][iSMB] + "/Postprocessing/IceVolume" +\
-                Region + ".nc"
-                global T
-                T, Vol = ReadData(File)
-                HESample = get_he_events(Runs[iTemp][iSMB],FluxThresh)
-                sig_level = kuipers_test(HESample,BaseRunSample)
-                plot_siglevel(sig_level,ax[count_row][count_col])
-                print(iTemp, iSMB, sig_level)
-                surge_events = extract_surges(Vol,thresh=GradThresh)
-                Theta = 2*np.pi/1500.0*T
-                plot_he_lines(ax[count_row][count_col], Theta, Vol, surge_events)
+                fname = f'Data/IceVolume{args.region}_{runs[i_temp][i_smb]}.nc'
+                print(fname)
+                time, vol = read_data(fname)
+                he_sample = get_he_events(runs[i_temp][i_smb], args.region, flux_thresh)
+                sig_level = kuipers_test(he_sample, base_sample)
+                plot_siglevel(sig_level, ax[count_row][count_col])
+                surge_events = extract_surges(vol, thresh=grad_thresh)
+                theta = 2 * np.pi / 1500.0 * time
+                plot_he_lines(ax[count_row][count_col], theta, vol, surge_events)
                 plot_do_cycle_polar(ax[count_row][count_col])
-                set_axis_properties(ax[count_row][count_col],xticks,labels)
-                create_subplot_labels(ax[count_row][count_col],count_row,count_col)
-                add_phase_locking_text(ax[count_row][count_col],sig_level)
+                set_axis_properties(args.region, ax[count_row][count_col],
+                                    xticks, labels)
+                create_subplot_labels(ax[count_row][count_col], count_row, count_col)
+                add_phase_locking_text(ax[count_row][count_col], sig_level)
                 if count_col == 0:
-                    plot_panel_titles(ax[count_row][count_col],SMBPert[iSMB],0)
+                    plot_panel_titles(ax[count_row][count_col],
+                                      smb_pert[i_smb], 0)
                 if count_row == 1:
-                    plot_panel_titles(ax[count_row][count_col],TPert[iTemp],1)
+                    plot_panel_titles(ax[count_row][count_col],
+                                      t_pert[i_temp], 1)
                 if count_col == 1:
                     count_col = 0
                     count_row += 1
                 else:
                     count_col += 1
+    plt.savefig(f'Fig02_Polar_{args.region}_Reduced.png', dpi=300,
+                bbox_inches='tight')
 
-    # ax[0,0].legend(loc=1, bbox_to_anchor=(1.35,1.175))
-    plt.savefig('Polar_'+ Region + '_Reduced.png', dpi=300, bbox_inches='tight')
-    plt.show()
-    sys.exit()
 
 if __name__ == '__main__':
     main()
