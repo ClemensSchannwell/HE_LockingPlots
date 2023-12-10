@@ -28,28 +28,67 @@ def compute_flux(time, flux, threshold=2.25e12, clen=1500):
     clen_ind = int(clen / 100)
     cum_flux = np.zeros(clen_ind)
     cum_flux_max = np.zeros(clen_ind)
+    he_timing = []
     counter = 0
     for i in range(0, len(time), clen_ind):
         if (i > clen_ind) and (i + clen_ind < len(time)) and counter == 0:
             flux_wind = flux[i:i + len(cum_flux)]
+            time_wind = time[i:i + len(cum_flux)]
             # Con1=(FluxWind>Threshold)*1.0
             max_val = flux_wind.max()
             if max_val > threshold:
                 counter = 1
                 con2 = (flux_wind == max_val) * 1.0
+                if np.nonzero(con2 == 1)[0][0] > 2 and \
+                        np.nonzero(con2 == 1)[0][0] < 14:
+                    he_timing.append(time_wind[con2 == 1][0])
             else:
                 con2 = np.zeros(clen_ind)
             cum_flux = cum_flux + (flux_wind > threshold) * 1.0
             cum_flux_max = cum_flux_max + con2
         else:
             counter = 0
-    return cum_flux, cum_flux_max
+    return cum_flux, cum_flux_max, he_timing
 
 
 def compute_hist(time, flux, threshold=2.25e12, clen=1500):
-    _, fmax = compute_flux(time, flux, threshold=threshold, clen=clen)
+    _, fmax, _ = compute_flux(time, flux, threshold=threshold, clen=clen)
     event = np.asarray(flux2hetiming(fmax))
     return event
+
+
+def compute_sync_mat(thresh_vec, runs, clen=1500):
+    counter = 0
+    aggregate = np.array([])
+    for thresh_count, thresh_val in enumerate(thresh_vec):
+        sync_mat = np.zeros((len(runs[0][:]), len(runs[:])))
+        for i_smb in range(len(runs[0])):
+            for i_temp in range(len(runs)):
+                fname_hud = f"Data/HudsonHov_{runs[i_temp][i_smb]}.nc"
+                fname_ken = f"Data/KenzieHov_{runs[i_temp][i_smb]}.nc"
+                thresh_hud = 2.25e12
+                thresh_ken = 1.e12
+                time, flux = read_data(fname_hud, 'flux_crossSection')
+                _, _, he_timing_hud = compute_flux(time, flux,
+                                                   threshold=thresh_hud,
+                                                   clen=clen)
+                time, flux = read_data(fname_ken, 'flux_crossSection')
+                _, _, he_timing_ken = compute_flux(time, flux,
+                                                   threshold=thresh_ken,
+                                                   clen=clen)
+                event_counter = 0
+                for he_count, he_val in enumerate(he_timing_hud):
+                    diff = abs(he_val - he_timing_ken)
+                    if np.sum(diff < thresh_val) > 0:
+                        event_counter += 1
+
+                sync_mat[i_smb, i_temp] = event_counter / len(he_timing_hud)
+        if counter == 0:
+            aggregate = np.mean(sync_mat, axis=0)
+            counter = 1
+        else:
+            aggregate = np.vstack((aggregate, np.mean(sync_mat, axis=0)))
+    return aggregate
 
 
 def create_do_forcing_plot(fig, ax, counter):
