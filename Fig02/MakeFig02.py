@@ -63,10 +63,10 @@ def main():
     ax0.xaxis.grid(True)
     create_subplot_labels(ax0, 0, 0)
     ax0.set_title("Single event cycle", fontsize=17, fontweight='bold')
-    ax0.text(0.5, 0.80, 'interstadial phase', color='black',
+    ax0.text(0.5, 0.80, 'warming phase', color='black',
              horizontalalignment='center', verticalalignment='center',
              transform=ax0.transAxes, fontsize=17)
-    ax0.text(0.5, 0.20, 'stadial phase', color='black',
+    ax0.text(0.5, 0.20, 'cooling phase', color='black',
              horizontalalignment='center', verticalalignment='center',
              transform=ax0.transAxes, fontsize=17)
     ax0.text(-0.02, 0.20, 'Heinrich\nevent', color='blue',

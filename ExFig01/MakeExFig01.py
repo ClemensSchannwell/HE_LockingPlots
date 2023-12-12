@@ -28,7 +28,6 @@ def main():
         surge_events = extract_surges(vol, thresh=grad_thresh[count])
         theta = 2 * np.pi / 1500.0 * time
         plot_he_lines(ax[count], theta, vol, surge_events)
-        plot_do_cycle_polar(ax[count])
         set_axis_properties(ireg, ax[count], xticks, labels)
         create_subplot_labels(ax[count], count)
     ax[0].legend(loc=1, bbox_to_anchor=(2.02, 0.5), fontsize=17)
