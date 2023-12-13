@@ -43,7 +43,6 @@ def set_axis_properties(region, ax, xticks, labels):
 
 
 def main():
-    # global base_path, region, t_pert, smb_pert
     parser = argparse.ArgumentParser()
     parser.add_argument("-reg", "--region", choices=["Hudson", "Kenzie"],
                         help="Specify which plot you want to create",

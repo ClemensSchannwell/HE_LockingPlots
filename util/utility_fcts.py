@@ -223,12 +223,25 @@ def moving_average(vec, window_size=10):
     return np.convolve(vec, window, mode='same')
 
 
-def plot_do_cycle_polar(ax):
+def plot_do_cycle_polar(ax, clen=1500):
     n = 200
-    theta_c1 = np.linspace(0, 2 * np.pi / 1500 * 200, n)
-    theta_c2 = np.linspace(2 * np.pi / 1500 * 1300, 2 * np.pi / 1500 * 1500, n)
-    theta_w1 = np.linspace(2 * np.pi / 1500 * 200, 2 * np.pi / 1500 * 750, n)
-    theta_w2 = np.linspace(2 * np.pi / 1500 * 750, 2 * np.pi / 1500 * 1300, n)
+    if clen == 1000:
+        theta_c1 = np.linspace(0, 2 * np.pi / clen * 100, n)
+        theta_c2 = np.linspace(2 * np.pi / clen * 900, 2 * np.pi / clen * clen,
+                               n)
+        theta_w1 = np.linspace(2 * np.pi / clen * 100, 2 * np.pi / clen * 500, n)
+        theta_w2 = np.linspace(2 * np.pi / clen * 500, 2 * np.pi / clen * 900, n)
+    elif clen == 2000:
+        theta_c1 = np.linspace(0, 2 * np.pi / clen * 300, n)
+        theta_c2 = np.linspace(2 * np.pi / clen * 1700, 2 * np.pi / clen * clen,
+                               n)
+        theta_w1 = np.linspace(2 * np.pi / clen * 300, 2 * np.pi / clen * 1000, n)
+        theta_w2 = np.linspace(2 * np.pi / clen * 1000, 2 * np.pi / clen * 1700, n)
+    else:
+        theta_c1 = np.linspace(0, 2 * np.pi / clen * 200, n)
+        theta_c2 = np.linspace(2 * np.pi / clen * 1300, 2 * np.pi / 1500 * 1500, n)
+        theta_w1 = np.linspace(2 * np.pi / clen * 200, 2 * np.pi / 1500 * 750, n)
+        theta_w2 = np.linspace(2 * np.pi / clen * 750, 2 * np.pi / 1500 * 1300, n)
     t = np.linspace(0, 2 * np.pi, n)
     r = np.linspace(2.10e15, 5.9e15, 2)
     rg, tg = np.meshgrid(r, theta_c1)
@@ -262,7 +275,7 @@ def plot_he_lines(ax, theta, vol, surge_events):
 
 def plot_panel_titles(ax, i_smb, i_temp):
     if i_temp == 0:
-        smb_str = "$\Delta$SMB = " + str(round(i_smb/1000,3)) + " m/yr"
+        smb_str = "$\Delta$SMB = " + str(round(i_smb / 1000, 3)) + " m/yr"
         ax.text(-0.2, 0.5, smb_str, color="black",
                 horizontalalignment='center', verticalalignment='center',
                 transform=ax.transAxes, rotation=90, fontsize=17,
