@@ -55,7 +55,6 @@ def main():
         flux_thresh = 2.25e12
         GradThresh = -2e11
     runs = ["HE97", "HE90", "HE91", "HE92"]
-    # runs = ["HE104", "HE98", "HE105", "HE106"]
     ticks = np.array([0, 300, 600, 900, 1200])
     xticks = 2 * np.pi / 1500.0 * ticks
     labels = ['0', '300', '600', '900', '1200']
