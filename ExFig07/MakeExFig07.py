@@ -3,24 +3,45 @@
 import argparse
 import sys
 from tueplots import figsizes
+
 sys.path.append("../util")
 from utility_fcts import *
 
 
 def create_subplot_labels(ax, row, col):
-    label_mat = [['(a)', '(b)', '(c)', '(d)'], ['(e)', '(f)', '(g)', '(h)'],
-                 ['(i)', '(j)', '(k)', '(l)'], ['(m)', '(n)', '(o)', '(p)'],
-                 ['(q)', '(r)', '(s)', '(t)'], ['(u)', '(v)', '(w)', '(x)'],
-                 ['(y)', '(z)', '(aa)', '(bb)']]
-    ax.text(0.05, 0.95, label_mat[row][col], color='black',
-            horizontalalignment='center', verticalalignment='center',
-            transform=ax.transAxes, fontsize=14)
+    label_mat = [
+        ["(a)", "(b)", "(c)", "(d)"],
+        ["(e)", "(f)", "(g)", "(h)"],
+        ["(i)", "(j)", "(k)", "(l)"],
+        ["(m)", "(n)", "(o)", "(p)"],
+        ["(q)", "(r)", "(s)", "(t)"],
+        ["(u)", "(v)", "(w)", "(x)"],
+        ["(y)", "(z)", "(aa)", "(bb)"],
+    ]
+    ax.text(
+        0.05,
+        0.95,
+        label_mat[row][col],
+        color="black",
+        horizontalalignment="center",
+        verticalalignment="center",
+        transform=ax.transAxes,
+        fontsize=14,
+    )
 
 
 def plot_panel_titles(ax, i_mult):
     forc_str = f"x{i_mult + 1}"
-    ax.text(1.05, 0.90, forc_str, color="black", horizontalalignment='center',
-            verticalalignment='center', transform=ax.transAxes, fontsize=14)
+    ax.text(
+        1.05,
+        0.90,
+        forc_str,
+        color="black",
+        horizontalalignment="center",
+        verticalalignment="center",
+        transform=ax.transAxes,
+        fontsize=14,
+    )
 
 
 def set_axis_properties(region, ax, xticks, labels):
@@ -28,7 +49,7 @@ def set_axis_properties(region, ax, xticks, labels):
         ax.set_ylim(3.85e15, 4.95e15)
     else:
         ax.set_ylim(4e15, 5.9e15)
-    ax.set_theta_zero_location('N')
+    ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     ax.set_yticklabels([])
     ax.yaxis.grid(False)
@@ -40,9 +61,13 @@ def set_axis_properties(region, ax, xticks, labels):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-reg", "--region", choices=["Hudson", "Kenzie"],
-                        help="Specify which plot you want to create",
-                        required=True)
+    parser.add_argument(
+        "-reg",
+        "--region",
+        choices=["Hudson", "Kenzie"],
+        help="Specify which plot you want to create",
+        required=True,
+    )
 
     args = parser.parse_args()
     if args.region == "Kenzie":
@@ -57,13 +82,13 @@ def main():
     runs = ["HE97", "HE90", "HE91", "HE92"]
     ticks = np.array([0, 300, 600, 900, 1200])
     xticks = 2 * np.pi / 1500.0 * ticks
-    labels = ['0', '300', '600', '900', '1200']
+    labels = ["0", "300", "600", "900", "1200"]
     plt.rcParams.update({"figure.dpi": 150})
     plt.rcParams.update(figsizes.icml2022_half(nrows=len(runs), ncols=1))
-    fig, ax = plt.subplots(len(runs), 1, subplot_kw={'projection': 'polar'})
+    fig, ax = plt.subplots(len(runs), 1, subplot_kw={"projection": "polar"})
 
     for i_mult in range(len(runs)):
-        fname = f'Data/IceVolume{args.region}_{runs[i_mult]}.nc'
+        fname = f"Data/IceVolume{args.region}_{runs[i_mult]}.nc"
         time, vol = read_data(fname)
         he_sample = get_he_events(runs[i_mult], args.region, flux_thresh)
         sig_level = kuipers_test(he_sample, base_sample)
@@ -76,9 +101,10 @@ def main():
         plot_panel_titles(ax[i_mult], i_mult)
         create_subplot_labels(ax[i_mult], 0, i_mult)
     ax[0].legend(loc=1, bbox_to_anchor=(1.4, 1.2))
-    plt.savefig(f'ExFig07_Polar_{args.region}.png', dpi=300,
-                bbox_inches='tight')
+    plt.savefig(
+        f"ExFig07_Polar_{args.region}.png", dpi=300, bbox_inches="tight"
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
