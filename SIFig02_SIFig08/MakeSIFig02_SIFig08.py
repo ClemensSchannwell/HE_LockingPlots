@@ -84,7 +84,7 @@ def main():
         base_sample = get_he_events("HE02", args.region, threshold=1.0e12)
         grad_thresh = -2e11
         flux_thresh = 1.5e12
-        figno = "04"
+        figno = "08"
     else:
         base_sample = get_he_events("HE02", args.region)
         grad_thresh = -3e11
@@ -137,7 +137,7 @@ def main():
             create_subplot_labels(ax[i_smb][i_temp], i_smb, i_temp)
     ax[0, 0].legend(loc=1, bbox_to_anchor=(1.35, 1.175))
     plt.savefig(
-        f"ExFig{figno}_Polar_{args.region}.png", dpi=300, bbox_inches="tight"
+        f"SIFig{figno}_Polar_{args.region}.png", dpi=300, bbox_inches="tight"
     )
 
 
