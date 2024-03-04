@@ -10,15 +10,32 @@ import cartopy
 
 
 def add_manual_grid_labels(ax):
-    txt = [ "120°W", "90°W", "60°W", "50°N", "30°W", "0°", "40°N", "30°E",
-            "60°N", "70°N", "80°N"]
+    txt = [
+        "120°W",
+        "90°W",
+        "60°W",
+        "50°N",
+        "30°W",
+        "0°",
+        "40°N",
+        "30°E",
+        "60°N",
+        "70°N",
+        "80°N",
+    ]
     xpos = [-0.09, -0.07, 0.35, 0.52, 0.65, 1.04, 1.06, 1.06, 0.9, 0.75, 0.6]
-    ypos = [0.74, 0.03, -0.06, -0.06, -0.06, 0.03, 0.15, 0.73, 1.05, 1.05,
-            1.05]
+    ypos = [0.74, 0.03, -0.06, -0.06, -0.06, 0.03, 0.15, 0.73, 1.05, 1.05, 1.05]
     for i_tcount, i_txt in enumerate(txt):
-        ax.text(xpos[i_tcount], ypos[i_tcount], i_txt,
-                  horizontalalignment='center', verticalalignment='center',
-                  transform=ax.transAxes, fontsize=9)
+        ax.text(
+            xpos[i_tcount],
+            ypos[i_tcount],
+            i_txt,
+            horizontalalignment="center",
+            verticalalignment="center",
+            transform=ax.transAxes,
+            fontsize=9,
+        )
+
 
 def read_var(fname, var_name):
     nc_file = Dataset(fname)
@@ -54,9 +71,7 @@ def main():
         2,
         figsize=(10, 4),
         constrained_layout=True,
-        subplot_kw={
-            "projection": ccrs.NorthPolarStereo(central_longitude=-45)
-        },
+        subplot_kw={"projection": ccrs.NorthPolarStereo(central_longitude=-45)},
     )
     clevs = np.arange(0, 4000, 1000)
     pl_vars = [smb, temp]
