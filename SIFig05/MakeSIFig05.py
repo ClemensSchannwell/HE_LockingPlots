@@ -140,7 +140,7 @@ def main():
         create_subplot_labels(ax[i_mult], 0, i_mult)
     ax[0].legend(loc=1, bbox_to_anchor=(1.37, 1.15))
     plt.savefig(
-        f"ExFig08_Polar_{args.region}.png", dpi=300, bbox_inches="tight"
+        f"SIFig05_Polar_{args.region}.png", dpi=300, bbox_inches="tight"
     )
 
 
