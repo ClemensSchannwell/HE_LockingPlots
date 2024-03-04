@@ -5,20 +5,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cmasher as cmr
+import matplotlib.ticker as mticker
+import cartopy
 
-# import matplotlib.pylab as mpl
-# import matplotlib.colors as colors
-# from matplotlib.colors import LogNorm
-# from matplotlib import ticker
-# import sys,os,glob
-# sys.path.append("/home/m/m300792/scripts")
-# import argparse
-# import cartopy.crs as ccrs
-# import cartopy
-# import cartopy.feature as cfeature
-# import colormaps as cmaps
-# import cmasher as cmr
 
+def add_manual_grid_labels(ax):
+    txt = [ "120°W", "90°W", "60°W", "50°N", "30°W", "0°", "40°N", "30°E",
+            "60°N", "70°N", "80°N"]
+    xpos = [-0.09, -0.07, 0.35, 0.52, 0.65, 1.04, 1.06, 1.06, 0.9, 0.75, 0.6]
+    ypos = [0.74, 0.03, -0.06, -0.06, -0.06, 0.03, 0.15, 0.73, 1.05, 1.05,
+            1.05]
+    for i_tcount, i_txt in enumerate(txt):
+        ax.text(xpos[i_tcount], ypos[i_tcount], i_txt,
+                  horizontalalignment='center', verticalalignment='center',
+                  transform=ax.transAxes, fontsize=9)
 
 def read_var(fname, var_name):
     nc_file = Dataset(fname)
@@ -68,9 +68,10 @@ def main():
         cmapD = cmr.get_sub_cmap("seismic", 0.2, 0.8, N=cm_classes[i_count])
         i_ax.coastlines(color="grey", zorder=1, resolution="110m")
         i_ax.set_extent([-120, 30, 50, 90], crs=ccrs.PlateCarree())
-        i_ax.gridlines(
-            draw_labels=True, linewidth=0.5, linestyle="--", color="black"
+        gl = i_ax.gridlines(
+            draw_labels=False, dms=True, linewidth=0.5, linestyle="--", color="black"
         )
+        add_manual_grid_labels(i_ax)
         pc = i_ax.pcolormesh(
             lon,
             lat,
@@ -90,7 +91,7 @@ def main():
         )
         cbar = fig.colorbar(pc, ax=i_ax, fraction=0.036, pad=0.02)
         cbar.set_label(labels[i_count])
-    plt.savefig(f"ExFig06_DO2D.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"SIFig06_DO2D.png", dpi=300, bbox_inches="tight")
 
 
 if __name__ == "__main__":
